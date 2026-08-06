@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:habispace/core/constants/secure_storage.dart';
+import 'package:ai_shopping_assistant/core/constants/secure_storage.dart';
 
 class AuthInterceptor extends Interceptor {
   @override

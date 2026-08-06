@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_color.dart';
+import 'package:ai_shopping_assistant/core/constants/app_colors.dart';
 
 class CustomSnackBar {
   void errorBar(BuildContext context, String message) {
