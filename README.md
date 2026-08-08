@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🛒 AI Shopping Assistant
 
 An intelligent e-commerce mobile application built with **Flutter** that enhances the online shopping experience by integrating **Generative AI** into product discovery and purchasing decisions.
@@ -87,3 +88,22 @@ lib/
 
 ---
 *Developed as a Graduation Project for ITI (Information Technology Institute).*
+=======
+# ai_shopping_assistant
+
+A new Flutter project.
+
+## Getting Started
+
+This project is a starting point for a Flutter application.
+
+A few resources to get you started if this is your first Flutter project:
+
+- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
+>>>>>>> 2c984e4 (home screen first work)
