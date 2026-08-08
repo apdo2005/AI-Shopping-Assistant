@@ -1,20 +1,86 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:habispace/core/constants/api_constant.dart';
-import 'package:habispace/core/constants/dio_helper.dart';
-import 'package:habispace/core/error/exceptions.dart';
-import 'package:habispace/features/auth/data/datasource/auth_datasource.dart';
-import 'package:habispace/features/auth/data/model/user_model.dart';
 
-class AuthDatasourceImpl implements AuthDatasource {
+import 'package:ai_shopping_assistant/core/constants/api_constant.dart';
+import 'package:ai_shopping_assistant/core/constants/dio_helper.dart';
+import 'package:ai_shopping_assistant/core/constants/secure_storage.dart';
+import 'package:ai_shopping_assistant/core/error/exceptions.dart';
+import 'package:ai_shopping_assistant/features/auth/data/datasource/auth_datasource.dart';
+import 'package:ai_shopping_assistant/features/auth/data/model/user_model.dart';
+
+class AuthDatasourceImpl implements AuthRemoteDataSource {
+  final fb_auth.FirebaseAuth _firebaseAuth = fb_auth.FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-  bool isInitialize = false;
 
-  Future ensureInitialized() async {
-    if (isInitialize) return;
+  bool isInitialized = false;
+  Future<void> ensureInitialized() async {
+    if (isInitialized) return;
 
-    await _googleSignIn.initialize(serverClientId: '936772323750-bh2bdr1ilfaj9jr6vpvq6e7j0fgt9ids.apps.googleusercontent.com');
-    isInitialize = true;
+    await _googleSignIn.initialize(
+      serverClientId:
+          '936772323750-bh2bdr1ilfaj9jr6vpvq6e7j0fgt9ids.apps.googleusercontent.com',
+    );
+
+    isInitialized = true;
+  }
+
+  @override
+  Future<UserModel> signUpWithEmail({
+    required String name,
+    required String email,
+    required String username,
+    required String location,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    fb_auth.UserCredential? credential;
+
+    try {
+      credential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      await credential.user?.updateDisplayName(name);
+      final response = await DioHelper.post(
+        path: ApiConstant.signup,
+        data: {
+          "username": name.trim().replaceAll(' ', '_').toLowerCase(),
+          "name": name,
+          "email": email,
+          "location": location,
+          "password": password,
+          "password_confirmation": passwordConfirmation,
+          "agree_terms": true,
+        },
+      );
+
+      _checkStatus(response);
+
+      final user = UserModel.fromJson(response.data);
+
+      if (user.token != null && user.token!.isNotEmpty) {
+        await SecureStorage().setString(SecureKeys.token, user.token!);
+      }
+
+      return user;
+    } on fb_auth.FirebaseAuthException catch (e) {
+      await credential?.user?.delete();
+      throw AuthException(e.message ?? 'Firebase authentication failed');
+    } on DioException catch (e) {
+      await credential?.user?.delete();
+      throw AuthException(_extractApiErrorMessage(e));
+    } on AuthException {
+      await credential?.user?.delete();
+      rethrow;
+    } on ServerException {
+      await credential?.user?.delete();
+      rethrow;
+    } catch (e) {
+      await credential?.user?.delete();
+      throw ServerException('Failed to create account: ${e.toString()}');
+    }
   }
 
   @override
@@ -23,13 +89,27 @@ class AuthDatasourceImpl implements AuthDatasource {
     required String password,
   }) async {
     try {
-      final response = await DioHelper.post(
-        path: ApiConstant.login,
-        data: {"email": email, "password": password},
+      await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
 
-      _checkStatus(response, response.statusCode!);
-      return UserModel.fromJson(response.data);
+      final response = await DioHelper.post(
+        path: ApiConstant.login,
+        data: {"login": email, "password": password},
+      );
+
+      _checkStatus(response);
+      final user = UserModel.fromJson(response.data);
+      if (user.token != null && user.token!.isNotEmpty) {
+        await SecureStorage().setString(SecureKeys.token, user.token!);
+      }
+
+      return user;
+    } on fb_auth.FirebaseAuthException catch (e) {
+      throw AuthException(e.message ?? 'Authentication failed');
+    } on DioException catch (e) {
+      throw AuthException(_extractApiErrorMessage(e));
     } on AuthException {
       rethrow;
     } on ServerException {
@@ -44,23 +124,38 @@ class AuthDatasourceImpl implements AuthDatasource {
     try {
       await ensureInitialized();
 
-      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
-
-      final GoogleSignInAuthentication googleAuth =
-      await googleUser.authentication;
-
+      final googleUser = await _googleSignIn.authenticate();
+      final googleAuth = googleUser.authentication;
       final idToken = googleAuth.idToken;
 
       if (idToken == null) {
-        throw AuthException('Failed to get Google ID token.');
+        throw AuthException('Failed to get Google token');
       }
+
+      final credential = fb_auth.GoogleAuthProvider.credential(
+        idToken: idToken,
+      );
+
+      await _firebaseAuth.signInWithCredential(credential);
 
       final response = await DioHelper.post(
         path: ApiConstant.loginWithGoogle,
         data: {"id_token": idToken},
       );
-      _checkStatus(response, response.statusCode!);
-      return UserModel.fromJson(response.data);
+
+      _checkStatus(response);
+
+      final user = UserModel.fromJson(response.data);
+
+      if (user.token != null && user.token!.isNotEmpty) {
+        await SecureStorage().setString(SecureKeys.token, user.token!);
+      }
+
+      return user;
+    } on fb_auth.FirebaseAuthException catch (e) {
+      throw AuthException(e.message ?? 'Google authentication failed');
+    } on DioException catch (e) {
+      throw AuthException(_extractApiErrorMessage(e));
     } on AuthException {
       rethrow;
     } on ServerException {
@@ -75,23 +170,16 @@ class AuthDatasourceImpl implements AuthDatasource {
     try {
       final response = await DioHelper.post(
         path: ApiConstant.forgotPassword,
-        data: {"email": email},
+        data: {"identifier": email},
       );
 
-      final statusCode = response.statusCode ?? 500;
-      final message =
-          response.data?['message'] as String? ??
-          'If an account exists for that email, a reset link has been sent.';
+      _checkStatus(response);
 
-      if (statusCode < 200 || statusCode >= 300) {
-        throw ServerException(message);
-      }
-
-      return message;
-    } on ServerException {
-      rethrow;
+      return response.data['message'] ?? 'Password reset sent';
+    } on DioException catch (e) {
+      throw AuthException(_extractApiErrorMessage(e));
     } catch (e) {
-      throw ServerException('Failed: ${e.toString()}');
+      throw ServerException('Failed to send reset password: ${e.toString()}');
     }
   }
 
@@ -100,15 +188,14 @@ class AuthDatasourceImpl implements AuthDatasource {
     try {
       final response = await DioHelper.post(
         path: ApiConstant.verifyOtp,
-        data: {"email": email, "otp": otp},
+        data: {"identifier": email, "otp": otp},
       );
-      _checkStatus(response, response.statusCode!);
-      final message = response.data?['message'] as String? ?? 'OTP verified.';
-      return message;
-    } on AuthException {
-      rethrow;
-    } on ServerException {
-      rethrow;
+
+      _checkStatus(response);
+
+      return response.data['message'] ?? 'OTP verified';
+    } on DioException catch (e) {
+      throw AuthException(_extractApiErrorMessage(e));
     } catch (e) {
       throw ServerException('Failed to verify OTP: ${e.toString()}');
     }
@@ -125,59 +212,50 @@ class AuthDatasourceImpl implements AuthDatasource {
       final response = await DioHelper.post(
         path: ApiConstant.resetPassword,
         data: {
-          "email": email,
+          "identifier": email,
           "otp": otp,
           "password": password,
           "password_confirmation": passwordConfirmation,
         },
       );
-      _checkStatus(response, response.statusCode!);
-    } on AuthException {
-      rethrow;
-    } on ServerException {
-      rethrow;
+
+      _checkStatus(response);
+    } on DioException catch (e) {
+      throw AuthException(_extractApiErrorMessage(e));
     } catch (e) {
       throw ServerException('Failed to reset password: ${e.toString()}');
     }
   }
+}
 
-  @override
-  Future<UserModel> signUpWithEmail({
-    required String name,
-    required String email,
-    required String password,
-    required String passwordConfirmation,
-  }) async {
-    try {
-      final response = await DioHelper.post(
-        path: ApiConstant.signup,
-        data: {
-          "name": name,
-          "email": email,
-          "password": password,
-          "password_confirmation": passwordConfirmation,
-        },
-      );
-      _checkStatus(response, response.statusCode!);
-      return UserModel.fromJson(response.data);
-    } on AuthException {
-      rethrow;
-    } on ServerException {
-      rethrow;
-    } catch (e) {
-      throw ServerException('Failed to sign up: ${e.toString()}');
-    }
+void _checkStatus(Response response) {
+  final statusCode = response.statusCode ?? 500;
+
+  if (statusCode == 400 || statusCode == 422) {
+    throw AuthException(response.data?['message'] ?? 'Invalid credentials');
+  }
+
+  if (statusCode < 200 || statusCode >= 300) {
+    throw ServerException('Server error $statusCode');
   }
 }
 
-void _checkStatus(Response response, int statusCode) {
-  statusCode = response.statusCode ?? 500;
-
-  if (statusCode == 422 || statusCode == 400) {
-    final message = response.data?['message'] ?? 'Invalid or expired token';
-    throw AuthException(message);
+String _extractApiErrorMessage(DioException e) {
+  final data = e.response?.data;
+  if (data is Map) {
+    if (data.containsKey('errors') && data['errors'] is Map) {
+      final errorsMap = data['errors'] as Map;
+      if (errorsMap.isNotEmpty) {
+        final firstKey = errorsMap.keys.first;
+        final firstErrorList = errorsMap[firstKey];
+        if (firstErrorList is List && firstErrorList.isNotEmpty) {
+          return firstErrorList.first.toString();
+        }
+      }
+    }
+    if (data.containsKey('message')) {
+      return data['message'].toString();
+    }
   }
-  if (statusCode < 200 || statusCode >= 300) {
-    throw ServerException('Server error: $statusCode');
-  }
+  return e.message ?? 'An unexpected network error occurred';
 }

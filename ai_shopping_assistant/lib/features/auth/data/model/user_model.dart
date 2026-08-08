@@ -1,4 +1,5 @@
-import 'package:habispace/features/auth/domain/entities/user_entity.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase;
+import '../../domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {
   const UserModel({
@@ -6,63 +7,44 @@ class UserModel extends UserEntity {
     required super.username,
     required super.email,
     required super.role,
-    required super.createdAt,
     super.location,
     super.phone,
     super.token,
+    required super.createdAt,
   });
 
+  factory UserModel.fromFirebaseUser(firebase.User user, {String? token}) {
+    return UserModel(
+      id: user.uid,
+      username: user.displayName ?? user.email?.split('@').first ?? 'User',
+      email: user.email ?? '',
+      role: 'user',
+      location: null,
+      phone: user.phoneNumber,
+      token: token,
+      createdAt: user.metadata.creationTime ?? DateTime.now(),
+    );
+  }
+
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    final data = json["data"] as Map<String, dynamic>;
-    final user = data["user"] as Map<String, dynamic>;
+    final data = json['data'] ?? json;
+    final userData = data['user'] ?? data;
 
     return UserModel(
-      id: (user["id"] ??0).toInt(),
-      username: user["name"] as String? ?? "Unknown",
-      email: user["email"] as String? ?? "",
-      role: user["role"] as String? ?? "user",
-      location: user["location"] as String?,
-      phone: user["phone"] ,
-      token: data["token"] as String?,
-      createdAt: user["created_at"] != null
-          ? DateTime.parse(user["created_at"])
+      id: userData['id']?.toString() ?? '',
+      username: userData['username'] ?? userData['name'] ?? '',
+      email: userData['email'] ?? '',
+      role: userData['role'] ?? 'user',
+      location: userData['location'],
+      phone: userData['phone'],
+      token: data['token'] ??
+    json['token'] ??
+    json['access_token'] ??
+    userData['token'],
+      createdAt: userData['created_at'] != null
+          ? DateTime.tryParse(userData['created_at'].toString()) ??
+                DateTime.now()
           : DateTime.now(),
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      "id": id,
-      "name": username,
-      "email": email,
-      "role": role,
-      "location": location,
-      "phone": phone,
-      "token": token,
-      "created_at": createdAt.toIso8601String(),
-    };
-  }
-
-  UserModel copyWith({
-    int? id,
-    String? username,
-    String? email,
-    String? role,
-    String? location,
-    String? phone,
-    String? token,
-    DateTime? createdAt,
-  }) {
-    return UserModel(
-      id: id ?? this.id,
-      username: username ?? this.username,
-      email: email ?? this.email,
-      role: role ?? this.role,
-      location: location ?? this.location,
-      phone: phone ?? this.phone,
-      token: token ?? this.token,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
-
 }

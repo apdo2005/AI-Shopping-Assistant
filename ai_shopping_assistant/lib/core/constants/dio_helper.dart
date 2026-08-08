@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 
 import '../error/app_exception.dart';
 import 'auth_interceptor.dart';
@@ -6,9 +9,7 @@ import 'logging_interceptors.dart';
 
 class DioHelper {
   DioHelper._();
-
   static late Dio _dio;
-
   static void init({
     required String baseUrl,
     Duration timeout = const Duration(seconds: 30),
@@ -16,7 +17,6 @@ class DioHelper {
   }) {
     _dio = Dio(
       BaseOptions(
-        
         baseUrl: baseUrl,
         connectTimeout: timeout,
         receiveTimeout: timeout,
@@ -29,6 +29,18 @@ class DioHelper {
         },
       ),
     );
+    _dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) {
+          return true;
+        };
+
+        return client;
+      },
+    );
 
     _addInterceptors(enableLogger);
   }
@@ -37,6 +49,7 @@ class DioHelper {
 
   static void _addInterceptors(bool enableLogger) {
     _dio.interceptors.add(AuthInterceptor());
+
     if (enableLogger) {
       _dio.interceptors.add(LoggingInterceptor());
     }
@@ -51,12 +64,15 @@ class DioHelper {
       return await _dio.get(
         path,
         queryParameters: query,
-        options: Options(extra: {'withAuth': withAuth}),
+        options: Options(
+          extra: {'withAuth': withAuth},
+        ),
       );
     } catch (e) {
       throw handleException(e);
     }
   }
+
 
   static Future<Response> post({
     required String path,
@@ -69,12 +85,24 @@ class DioHelper {
         path,
         data: data,
         queryParameters: query,
-        options: Options(extra: {'withAuth': withAuth}),
+        options: Options(
+          extra: {'withAuth': withAuth},
+        ),
       );
-    } catch (e) {
-      throw handleException(e);
+    } on DioException catch (e) {
+      print('========== DIO POST ERROR ==========');
+      print('TYPE: ${e.type}');
+      print('MESSAGE: ${e.message}');
+      print('URL: ${e.requestOptions.uri}');
+      print('RESPONSE: ${e.response}');
+      print('STATUS: ${e.response?.statusCode}');
+      print('DATA: ${e.response?.data}');
+      print('====================================');
+
+      rethrow;
     }
   }
+
 
   static Future<Response> put({
     required String path,
@@ -87,10 +115,21 @@ class DioHelper {
         path,
         data: data,
         queryParameters: query,
-        options: Options(extra: {'withAuth': withAuth}),
+        options: Options(
+          extra: {'withAuth': withAuth},
+        ),
       );
-    } catch (e) {
-      throw handleException(e);
+    } on DioException catch (e) {
+      print('========== DIO PUT ERROR ==========');
+      print('TYPE: ${e.type}');
+      print('MESSAGE: ${e.message}');
+      print('URL: ${e.requestOptions.uri}');
+      print('RESPONSE: ${e.response}');
+      print('STATUS: ${e.response?.statusCode}');
+      print('DATA: ${e.response?.data}');
+      print('===================================');
+
+      rethrow;
     }
   }
 
@@ -105,10 +144,21 @@ class DioHelper {
         path,
         data: data,
         queryParameters: query,
-        options: Options(extra: {'withAuth': withAuth}),
+        options: Options(
+          extra: {'withAuth': withAuth},
+        ),
       );
-    } catch (e) {
-      throw handleException(e);
+    } on DioException catch (e) {
+      print('========== DIO DELETE ERROR ==========');
+      print('TYPE: ${e.type}');
+      print('MESSAGE: ${e.message}');
+      print('URL: ${e.requestOptions.uri}');
+      print('RESPONSE: ${e.response}');
+      print('STATUS: ${e.response?.statusCode}');
+      print('DATA: ${e.response?.data}');
+      print('=====================================');
+
+      rethrow;
     }
   }
 
@@ -128,8 +178,17 @@ class DioHelper {
           contentType: 'multipart/form-data',
         ),
       );
-    } catch (e) {
-      throw handleException(e);
+    } on DioException catch (e) {
+      print('========== DIO FORM DATA ERROR ==========');
+      print('TYPE: ${e.type}');
+      print('MESSAGE: ${e.message}');
+      print('URL: ${e.requestOptions.uri}');
+      print('RESPONSE: ${e.response}');
+      print('STATUS: ${e.response?.statusCode}');
+      print('DATA: ${e.response?.data}');
+      print('========================================');
+
+      rethrow;
     }
   }
 }
