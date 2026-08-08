@@ -8,7 +8,7 @@ import 'package:ai_shopping_assistant/features/splash/presentation/splash_screen
 import 'package:ai_shopping_assistant/features/auth/presentation/logic/auth_bloc.dart';
 import 'package:ai_shopping_assistant/features/auth/data/repository/auth_repository_impl.dart';
 import 'package:ai_shopping_assistant/features/auth/data/datasource/auth_datasource_impl.dart';
-
+// EL main ya pro😎
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
