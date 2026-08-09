@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'package:ai_shopping_assistant/core/constants/api_constant.dart';
 import 'package:ai_shopping_assistant/core/constants/dio_helper.dart';
@@ -11,6 +12,7 @@ import 'package:ai_shopping_assistant/features/auth/data/datasource/auth_datasou
 // EL main ya pro😎
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
