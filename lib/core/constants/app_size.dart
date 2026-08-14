@@ -16,6 +16,5 @@ class AppSize {
   static const double smSpacing = 10;
   static const double mdSpacing = 35;
 
-  
   static const double mdHeight = 80;
 }

@@ -4,5 +4,6 @@ import '../entities/product_entity.dart';
 
 abstract class HomeRepository {
   Future<Either<String, List<CategoryEntity>>> getCategories();
-  Future<Either<String, List<ProductEntity>>> getRecommendations(); // Personalized / Today's deals
+  Future<Either<String, List<ProductEntity>>>
+  getRecommendations(); // Personalized / Today's deals
 }

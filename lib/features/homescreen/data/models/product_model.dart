@@ -17,18 +17,18 @@ class ProductModel extends ProductEntity {
     required bool isFeatured,
     required this.slug,
   }) : super(
-    id: id,
-    title: title,
-    description: description,
-    imageUrl: imageUrl,
-    price: price,
-    discountPrice: discountPrice,
-    finalPrice: finalPrice,
-    rating: rating,
-    ratingCount: ratingCount,
-    hasOffer: hasOffer,
-    isFeatured: isFeatured,
-  );
+         id: id,
+         title: title,
+         description: description,
+         imageUrl: imageUrl,
+         price: price,
+         discountPrice: discountPrice,
+         finalPrice: finalPrice,
+         rating: rating,
+         ratingCount: ratingCount,
+         hasOffer: hasOffer,
+         isFeatured: isFeatured,
+       );
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(

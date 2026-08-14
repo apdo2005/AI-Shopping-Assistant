@@ -5,6 +5,7 @@ import 'package:ai_shopping_assistant/core/constants/app_colors.dart';
 import '../bloc/search_cubit.dart';
 import '../../domain/entities/product_entity.dart';
 import 'product_details_screen.dart';
+import 'package:ai_shopping_assistant/features/cart/presentation/bloc/cart_cubit.dart';
 
 class SearchScreen extends StatelessWidget {
   final bool initialVoiceSearch;
@@ -135,7 +136,10 @@ class _SearchScreenViewState extends State<_SearchScreenView> {
           IconButton(
             icon: _isListening
                 ? const Icon(Icons.mic, color: AppColors.red)
-                : const Icon(Icons.mic_none_rounded, color: AppColors.textSecondary),
+                : const Icon(
+                    Icons.mic_none_rounded,
+                    color: AppColors.textSecondary,
+                  ),
             onPressed: () {
               if (_isListening) {
                 _stopVoiceSearch();
@@ -200,7 +204,8 @@ class _SearchScreenViewState extends State<_SearchScreenView> {
                 childAspectRatio: 0.72,
               ),
               itemCount: state.products.length,
-              itemBuilder: (context, index) => _SearchProductCard(product: state.products[index]),
+              itemBuilder: (context, index) =>
+                  _SearchProductCard(product: state.products[index]),
             );
           }
 
@@ -212,11 +217,15 @@ class _SearchScreenViewState extends State<_SearchScreenView> {
                 Icon(
                   _isListening ? Icons.mic : Icons.search,
                   size: 80,
-                  color: _isListening ? AppColors.red.withValues(alpha: 0.5) : AppColors.textSecondary.withValues(alpha: 0.2),
+                  color: _isListening
+                      ? AppColors.red.withValues(alpha: 0.5)
+                      : AppColors.textSecondary.withValues(alpha: 0.2),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _isListening ? 'Listening for your search...' : 'Type to search for products, meals, and more.',
+                  _isListening
+                      ? 'Listening for your search...'
+                      : 'Type to search for products, meals, and more.',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 16,
@@ -352,17 +361,37 @@ class _SearchProductCard extends StatelessWidget {
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: AppColors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 18,
+                      GestureDetector(
+                        onTap: () async {
+                          final added = await context.read<CartCubit>().addItem(
+                            int.tryParse(product.id) ?? 0,
+                          );
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                added
+                                    ? '${product.title} added to cart'
+                                    : 'Unable to add this item to cart',
+                              ),
+                              backgroundColor: added
+                                  ? AppColors.blue
+                                  : AppColors.red,
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: const BoxDecoration(
+                            color: AppColors.blue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ],

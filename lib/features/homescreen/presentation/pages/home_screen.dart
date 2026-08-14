@@ -1,3 +1,7 @@
+import 'package:ai_shopping_assistant/features/profile/presentation/pages/profile_screen.dart';
+import 'package:ai_shopping_assistant/features/cart/presentation/bloc/cart_cubit.dart';
+import 'package:ai_shopping_assistant/features/cart/presentation/bloc/cart_state.dart';
+import 'package:ai_shopping_assistant/features/cart/presentation/pages/cart_screen.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,35 +12,47 @@ import 'package:ai_shopping_assistant/features/homescreen/data/repositories/home
 import 'package:ai_shopping_assistant/features/homescreen/domain/usecases/get_home_data_usecase.dart';
 import 'package:ai_shopping_assistant/features/homescreen/presentation/bloc/home_cubit.dart';
 import 'package:ai_shopping_assistant/features/chatbot/presentation/screens/chatbot_screen.dart';
+import 'package:ai_shopping_assistant/features/orders/presentation/pages/orders_screen.dart';
 import 'home_content.dart';
 
 class MainWrapperScreen extends StatefulWidget {
-  const MainWrapperScreen({super.key});
+  final int initialIndex;
+  const MainWrapperScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainWrapperScreen> createState() => _MainWrapperScreenState();
 }
 
 class _MainWrapperScreenState extends State<MainWrapperScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   final _navKey = GlobalKey<CurvedNavigationBarState>();
 
   final List<Widget> _screens = [
     const HomeContent(),
-    const Center(child: Text('Search Screen')),
+    const OrdersScreen(),
     const ChatbotScreen(),
-    const Center(child: Text('Cart Screen')),
-    const Center(child: Text('Profile Screen')),
+    const CartScreen(),
+    const ProfileScreen(),
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => HomeCubit(
-        GetHomeDataUsecase(
-          HomeRepositoryImpl(HomeRemoteDataSourceImpl(DioHelper.dio)),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => HomeCubit(
+            GetHomeDataUsecase(
+              HomeRepositoryImpl(HomeRemoteDataSourceImpl(DioHelper.dio)),
+            ),
+          ),
         ),
-      ),
+      ],
       child: Scaffold(
         backgroundColor: AppColors.background,
         extendBody: true,
@@ -54,8 +70,8 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
           items: [
             // Home
             _buildNavIcon(Icons.home_rounded, 0),
-            // Search
-            _buildNavIcon(Icons.search_rounded, 1),
+            // Orders
+            _buildNavIcon(Icons.receipt_long_rounded, 1),
             // Chatbot (middle)
             _buildChatbotIcon(2),
             // Cart
@@ -70,6 +86,22 @@ class _MainWrapperScreenState extends State<MainWrapperScreen> {
 
   Widget _buildNavIcon(IconData icon, int index) {
     final isActive = _currentIndex == index;
+    if (index == 3) {
+      return BlocBuilder<CartCubit, CartState>(
+        builder: (_, state) {
+          final count = state is CartLoaded ? state.cart.itemCount : 0;
+          return Badge(
+            isLabelVisible: count > 0,
+            label: Text('$count'),
+            child: Icon(
+              icon,
+              size: 28,
+              color: isActive ? Colors.white : AppColors.blue,
+            ),
+          );
+        },
+      );
+    }
     return Icon(
       icon,
       size: 28,

@@ -9,6 +9,7 @@ import 'package:ai_shopping_assistant/features/subcategory/presentation/screens/
 import 'package:ai_shopping_assistant/features/subcategory/presentation/screens/meals_screen.dart';
 import 'package:ai_shopping_assistant/features/homescreen/presentation/pages/product_details_screen.dart';
 import 'package:ai_shopping_assistant/features/homescreen/presentation/pages/search_screen.dart';
+import 'package:ai_shopping_assistant/features/cart/presentation/bloc/cart_cubit.dart';
 
 class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
@@ -625,7 +626,7 @@ class _ProductCard extends StatelessWidget {
                               // color: AppColors.netural,
                               child: const Icon(
                                 Icons.image_not_supported_outlined,
-                                size  : 30,
+                                size: 30,
                                 color: Color.fromARGB(255, 61, 72, 109),
                               ),
                             ),
@@ -720,17 +721,37 @@ class _ProductCard extends StatelessWidget {
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: AppColors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 18,
+                      GestureDetector(
+                        onTap: () async {
+                          final added = await context.read<CartCubit>().addItem(
+                            int.tryParse(product.id) ?? 0,
+                          );
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                added
+                                    ? '${product.title} added to cart'
+                                    : 'Unable to add this item to cart',
+                              ),
+                              backgroundColor: added
+                                  ? AppColors.blue
+                                  : AppColors.red,
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: const BoxDecoration(
+                            color: AppColors.blue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ],

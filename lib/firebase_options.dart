@@ -76,7 +76,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '710442735711',
     projectId: 'ai-shopping-fdb19',
     storageBucket: 'ai-shopping-fdb19.firebasestorage.app',
-    iosClientId: '710442735711-8ij36keg7s16k3psuqomp4ee3ira0nei.apps.googleusercontent.com',
+    iosClientId:
+        '710442735711-8ij36keg7s16k3psuqomp4ee3ira0nei.apps.googleusercontent.com',
     iosBundleId: 'com.example.aiShoppingAssistant',
   );
 }

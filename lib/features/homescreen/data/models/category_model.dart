@@ -10,7 +10,8 @@ class CategoryModel extends CategoryEntity {
   const CategoryModel({
     required String id,
     required String name,
-    required String iconUrl, // بنربط الـ iconUrl بـ image_url الموجودة في الـ JSON
+    required String
+    iconUrl, // بنربط الـ iconUrl بـ image_url الموجودة في الـ JSON
     required this.slug,
     required this.description,
     required this.mealsCount,
