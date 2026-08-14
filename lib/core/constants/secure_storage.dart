@@ -37,7 +37,6 @@ class SecureStorage {
   }
 
   Future<void> setStringList(String key, List<String> value) async {
-
     String jsonString = jsonEncode(value);
     await _storage.write(key: key, value: jsonString);
   }
@@ -103,6 +102,8 @@ class AuthStorage {
   Future<void> init() async {
     token = await security.getString(SecureKeys.token);
     userId = await security.getString(SecureKeys.userId);
-    isOnboardingComplete = await security.getBool(SecureKeys.onboardingComplete);
+    isOnboardingComplete = await security.getBool(
+      SecureKeys.onboardingComplete,
+    );
   }
 }

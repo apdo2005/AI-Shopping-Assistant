@@ -9,25 +9,42 @@ import 'package:ai_shopping_assistant/features/splash/presentation/splash_screen
 import 'package:ai_shopping_assistant/features/auth/presentation/logic/auth_bloc.dart';
 import 'package:ai_shopping_assistant/features/auth/data/repository/auth_repository_impl.dart';
 import 'package:ai_shopping_assistant/features/auth/data/datasource/auth_datasource_impl.dart';
+import 'package:ai_shopping_assistant/features/cart/data/datasources/cart_remote_data_source.dart';
+import 'package:ai_shopping_assistant/features/cart/data/repositories/cart_repository_impl.dart';
+import 'package:ai_shopping_assistant/features/cart/presentation/bloc/cart_cubit.dart';
+import 'package:ai_shopping_assistant/features/orders/data/datasources/orders_remote_data_source.dart';
+import 'package:ai_shopping_assistant/features/orders/data/repositories/orders_repository_impl.dart';
+import 'package:ai_shopping_assistant/features/orders/presentation/bloc/orders_cubit.dart';
+
 // EL main ya pro😎
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  DioHelper.init(
-    baseUrl: ApiConstant.baseUrl,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  DioHelper.init(baseUrl: ApiConstant.baseUrl);
 
   runApp(
-    BlocProvider(
-      create: (context) => AuthBloc(
-        authRepository: AuthRepositoryImpl(
-          remoteDataSource: AuthDatasourceImpl(),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AuthBloc(
+            authRepository: AuthRepositoryImpl(
+              remoteDataSource: AuthDatasourceImpl(),
+            ),
+          ),
         ),
-      ),
+        BlocProvider(
+          create: (_) => OrdersCubit(
+            OrdersRepositoryImpl(OrdersRemoteDataSource(DioHelper.dio)),
+          )..load(),
+        ),
+        BlocProvider(
+          create: (_) => CartCubit(
+            CartRepositoryImpl(CartRemoteDataSourceImpl(DioHelper.dio)),
+          )..load(),
+        ),
+      ],
       child: const MyApp(),
     ),
   );

@@ -34,17 +34,21 @@ class SearchCubit extends Cubit<SearchState> {
       // Pass the query to the API
       final response = await DioHelper.get(
         path: ApiConstant.getProducts,
-        query: {'search': query}, // Adjust query parameter based on actual API if needed
+        query: {
+          'search': query,
+        }, // Adjust query parameter based on actual API if needed
       );
-      
+
       final responseData = response.data;
       List<dynamic> data = [];
       if (responseData is Map) {
-        data = (responseData['data'] ?? responseData['products'] ?? []) as List? ?? [];
+        data =
+            (responseData['data'] ?? responseData['products'] ?? []) as List? ??
+            [];
       } else if (responseData is List) {
         data = responseData;
       }
-      
+
       List<ProductEntity> products = data
           .map((json) => ProductModel.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -52,10 +56,13 @@ class SearchCubit extends Cubit<SearchState> {
       // Fallback: local filtering if backend doesn't filter
       if (products.isNotEmpty) {
         final lowerQuery = query.toLowerCase();
-        products = products.where((p) => 
-          p.title.toLowerCase().contains(lowerQuery) || 
-          p.description.toLowerCase().contains(lowerQuery)
-        ).toList();
+        products = products
+            .where(
+              (p) =>
+                  p.title.toLowerCase().contains(lowerQuery) ||
+                  p.description.toLowerCase().contains(lowerQuery),
+            )
+            .toList();
       }
 
       emit(SearchLoaded(products));

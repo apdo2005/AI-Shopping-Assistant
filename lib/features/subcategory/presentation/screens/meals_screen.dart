@@ -5,6 +5,7 @@ import 'package:ai_shopping_assistant/core/constants/dio_helper.dart';
 import '../../data/datasources/subcategory_remote_datasource.dart';
 import '../../domain/entities/meal_entity.dart';
 import '../cubit/subcategory_cubit.dart';
+import 'package:ai_shopping_assistant/features/cart/presentation/bloc/cart_cubit.dart';
 
 class MealsScreen extends StatelessWidget {
   final String subcategoryId;
@@ -33,7 +34,7 @@ class MealsScreen extends StatelessWidget {
 class _MealsView extends StatelessWidget {
   final String subcategoryName;
   final String subcategoryId;
-  
+
   const _MealsView({
     required this.subcategoryName,
     required this.subcategoryId,
@@ -309,11 +310,21 @@ class _MealCardState extends State<_MealCard> {
                       ),
                       // Add to cart button
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
+                          final added = await context.read<CartCubit>().addItem(
+                            int.tryParse(meal.id) ?? 0,
+                          );
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('${meal.title} added to cart'),
-                              backgroundColor: AppColors.blue,
+                              content: Text(
+                                added
+                                    ? '${meal.title} added to cart'
+                                    : 'Unable to add this item to cart',
+                              ),
+                              backgroundColor: added
+                                  ? AppColors.blue
+                                  : AppColors.red,
                               duration: const Duration(seconds: 1),
                               behavior: SnackBarBehavior.floating,
                             ),

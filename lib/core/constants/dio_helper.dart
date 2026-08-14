@@ -35,8 +35,8 @@ class DioHelper {
 
         client.badCertificateCallback =
             (X509Certificate cert, String host, int port) {
-          return true;
-        };
+              return true;
+            };
 
         return client;
       },
@@ -64,15 +64,12 @@ class DioHelper {
       return await _dio.get(
         path,
         queryParameters: query,
-        options: Options(
-          extra: {'withAuth': withAuth},
-        ),
+        options: Options(extra: {'withAuth': withAuth}),
       );
     } catch (e) {
       throw handleException(e);
     }
   }
-
 
   static Future<Response> post({
     required String path,
@@ -85,9 +82,7 @@ class DioHelper {
         path,
         data: data,
         queryParameters: query,
-        options: Options(
-          extra: {'withAuth': withAuth},
-        ),
+        options: Options(extra: {'withAuth': withAuth}),
       );
     } on DioException catch (e) {
       print('========== DIO POST ERROR ==========');
@@ -103,7 +98,6 @@ class DioHelper {
     }
   }
 
-
   static Future<Response> put({
     required String path,
     dynamic data,
@@ -115,9 +109,7 @@ class DioHelper {
         path,
         data: data,
         queryParameters: query,
-        options: Options(
-          extra: {'withAuth': withAuth},
-        ),
+        options: Options(extra: {'withAuth': withAuth}),
       );
     } on DioException catch (e) {
       print('========== DIO PUT ERROR ==========');
@@ -144,9 +136,7 @@ class DioHelper {
         path,
         data: data,
         queryParameters: query,
-        options: Options(
-          extra: {'withAuth': withAuth},
-        ),
+        options: Options(extra: {'withAuth': withAuth}),
       );
     } on DioException catch (e) {
       print('========== DIO DELETE ERROR ==========');

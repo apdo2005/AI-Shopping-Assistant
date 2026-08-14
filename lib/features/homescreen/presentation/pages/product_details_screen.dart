@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ai_shopping_assistant/core/constants/app_colors.dart';
 import '../../domain/entities/product_entity.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ai_shopping_assistant/features/cart/presentation/bloc/cart_cubit.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   final ProductEntity product;
@@ -104,7 +106,11 @@ class ProductDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 20,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         product.rating.toStringAsFixed(1),
@@ -179,11 +185,19 @@ class ProductDetailsScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          onPressed: () {
+          onPressed: () async {
+            final added = await context.read<CartCubit>().addItem(
+              int.tryParse(product.id) ?? 0,
+            );
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('${product.title} added to cart'),
-                backgroundColor: AppColors.blue,
+                content: Text(
+                  added
+                      ? '${product.title} added to cart'
+                      : 'Unable to add this item to cart',
+                ),
+                backgroundColor: added ? AppColors.blue : AppColors.red,
               ),
             );
           },

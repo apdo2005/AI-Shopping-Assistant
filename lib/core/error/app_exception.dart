@@ -45,7 +45,8 @@ AppException _fromDio(DioException e) {
     case DioExceptionType.sendTimeout:
     case DioExceptionType.receiveTimeout:
       return const AppException(
-        message: 'Connection timed out. Please check your internet and try again.',
+        message:
+            'Connection timed out. Please check your internet and try again.',
         type: AppExceptionType.timeout,
       );
 
@@ -73,10 +74,10 @@ AppException _fromDio(DioException e) {
 }
 
 AppException _fromStatusCode(int? statusCode, dynamic data) {
-
   String? serverMessage;
   if (data is Map) {
-    serverMessage = data['message']?.toString() ??
+    serverMessage =
+        data['message']?.toString() ??
         data['error']?.toString() ??
         data['msg']?.toString();
   }
